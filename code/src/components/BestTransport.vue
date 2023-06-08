@@ -24,10 +24,16 @@ export default {
     };
   },
   created() {
-    // Implemente aqui o GET dos dados da API REST
-    // para que isso ocorra na inicialização da pagina
-    this.appName = "Melhor Frete";
+    fetch("http://localhost:3000/tranport")
+      .then((response) => response.json())
+      .then((data) => {
+        this.appName = "Melhor Frete";
+      })
+      .catch((error) => {
+        console.error("Ocorreu um erro ao obter os dados da API:", error);
+      });
   },
+
   methods: {
     analyzeFreight() {
       fetch("http://localhost:3000/transport")
