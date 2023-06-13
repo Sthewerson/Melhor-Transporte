@@ -1,10 +1,45 @@
 <template>
   <div class="title">
-    <b-navbar toggleable="lg" type="dark" variant="info">
+    <b-navbar toggleable="md" type="dark" variant="dark">
       <b-navbar-brand class="ml-2">
         <b>{{ appName }}</b>
       </b-navbar-brand>
     </b-navbar>
+
+    <div class="best-transport">
+      <div class="form-group">
+        <label for="weight">Peso</label>
+        <input type="number" id="weight" v-model="weight" min="0" step="1" />
+      </div>
+
+      <div class="form-group">
+        <label for="destination">Destino:</label>
+        <select v-model="destination" id="destination">
+          <option
+            v-for="option in destinationOptions"
+            :value="option.city"
+            :key="option.id"
+          >
+            {{ option.city }}
+          </option>
+        </select>
+      </div>
+      <button @click="analyzeFreight">Analisar</button>
+
+      <div v-if="bestFreightEconomic">
+        <h3>Melhor Frete Econômico</h3>
+        <p>Transportadora: {{ bestFreightEconomic.name }}</p>
+        <p>Custo Total: {{ bestFreightEconomicCost }}</p>
+        <p>Tempo de Entrega: {{ bestFreightEconomic.lead_time }}</p>
+      </div>
+
+      <div v-if="bestFreightFast">
+        <h3>Melhor Frete Rápido</h3>
+        <p>Transportadora: {{ bestFreightFast.name }}</p>
+        <p>Custo Total: {{ bestFreightFastCost }}</p>
+        <p>Tempo de Entrega: {{ bestFreightFast.lead_time }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -17,17 +52,20 @@ export default {
     BNavbarBrand,
   },
   data() {
-    const appName = "";
-
     return {
-      appName,
+      appName: "Melhor Frete",
+      weight: 0,
+      destination: "",
+      destinationOptions: [], // Array para armazenar as opções de destino da API
+      bestFreightEconomic: null,
+      bestFreightFast: null,
     };
   },
   created() {
-    fetch("http://localhost:3000/tranport")
+    fetch("http://localhost:3000/transport")
       .then((response) => response.json())
       .then((data) => {
-        this.appName = "Melhor Frete";
+        this.destinationOptions = data.transport;
       })
       .catch((error) => {
         console.error("Ocorreu um erro ao obter os dados da API:", error);
@@ -39,7 +77,7 @@ export default {
       fetch("http://localhost:3000/transport")
         .then((response) => response.json())
         .then((data) => {
-          const cotacoesFiltradas = data.filter((cotacao) => {
+          const cotacoesFiltradas = data.transport.filter((cotacao) => {
             const pesoFrete =
               this.weight > 100
                 ? "cost_transport_heavy"
@@ -82,6 +120,24 @@ export default {
             error
           );
         });
+    },
+    calculateTotalCost(freight) {
+      if (!freight) return 0;
+
+      const pesoFrete =
+        this.weight > 100 ? "cost_transport_heavy" : "cost_transport_light";
+      const cost = parseFloat(
+        freight[pesoFrete].replace("R$ ", "").replace(",", ".")
+      );
+      return cost;
+    },
+  },
+  computed: {
+    bestFreightEconomicCost() {
+      return this.calculateTotalCost(this.bestFreightEconomic);
+    },
+    bestFreightFastCost() {
+      return this.calculateTotalCost(this.bestFreightFast);
     },
   },
 };
