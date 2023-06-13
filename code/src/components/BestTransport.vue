@@ -39,6 +39,13 @@
         <p>Custo Total: {{ bestFreightFastCost }}</p>
         <p>Tempo de Entrega: {{ bestFreightFast.lead_time }}</p>
       </div>
+
+      <div v-if="displayMessage" class="overlay">
+        <div class="message-container">
+          <p>Insira os valores para realizar a análise</p>
+          <button @click="closeMessage">Fechar</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -59,6 +66,7 @@ export default {
       destinationOptions: [],
       bestFreightEconomic: null,
       bestFreightFast: null,
+      displayMessage: true,
     };
   },
   created() {
@@ -124,6 +132,8 @@ export default {
                 return tempoAtual < tempoAnterior ? atual : anterior;
               }
             );
+
+            this.displayMessage = false; // Oculta a mensagem após a análise
           } else {
             console.error(
               "A resposta da API não contém um array válido de transportadoras"
@@ -148,6 +158,10 @@ export default {
       );
       return cost;
     },
+
+    closeMessage() {
+      this.displayMessage = false;
+    },
   },
   computed: {
     bestFreightEconomicCost() {
@@ -167,5 +181,24 @@ export default {
 
 .title .navbar-brand {
   margin-left: 20px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
 }
 </style>
