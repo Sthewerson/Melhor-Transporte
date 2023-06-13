@@ -47,7 +47,7 @@ A implementação da aplicação deve utilizar Vue.js e deve seguir os requisito
 Do ponto de vista de tecnologia utilizada para implementação, a unica exigência é utilizar Vue.js, outras bibliotecas, componentes e frameworks, podem ser utilizados, desde que sejam de código-aberto.
 
 
-## Instruções para Implementação
+## Instruções para rodar o codigo 
 
 Para facilitar a resolução do desafio, deixamos uma parte do projeto já montado para você. No diretório "code" deste repositório você terá o esqueleto do projeto já montado.
 
