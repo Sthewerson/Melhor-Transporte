@@ -56,7 +56,7 @@ export default {
       appName: "Melhor Frete",
       weight: 0,
       destination: "",
-      destinationOptions: [], // Array para armazenar as opções de destino da API
+      destinationOptions: [],
       bestFreightEconomic: null,
       bestFreightFast: null,
     };
@@ -65,7 +65,13 @@ export default {
     fetch("http://localhost:3000/transport")
       .then((response) => response.json())
       .then((data) => {
-        this.destinationOptions = data.transport;
+        if (Array.isArray(data)) {
+          this.destinationOptions = data;
+        } else {
+          console.error(
+            "A resposta da API não contém um array válido de transportadoras"
+          );
+        }
       })
       .catch((error) => {
         console.error("Ocorreu um erro ao obter os dados da API:", error);
@@ -74,45 +80,55 @@ export default {
 
   methods: {
     analyzeFreight() {
-      fetch("http://localhost:3000/transport")
+      fetch("http://localhost:3000/data.json")
         .then((response) => response.json())
         .then((data) => {
-          const cotacoesFiltradas = data.transport.filter((cotacao) => {
-            const pesoFrete =
-              this.weight > 100
-                ? "cost_transport_heavy"
-                : "cost_transport_light";
-            return (
-              cotacao.city.toLowerCase() === this.destination.toLowerCase() &&
-              cotacao[pesoFrete]
+          if (data && data.transport && Array.isArray(data.transport)) {
+            const cotacoesFiltradas = data.transport.filter((cotacao) => {
+              const pesoFrete =
+                this.weight > 100
+                  ? "cost_transport_heavy"
+                  : "cost_transport_light";
+              return (
+                cotacao.city.toLowerCase() === this.destination.toLowerCase() &&
+                cotacao[pesoFrete]
+              );
+            });
+
+            this.bestFreightEconomic = cotacoesFiltradas.reduce(
+              (anterior, atual) => {
+                const custoAnterior = parseFloat(
+                  anterior[
+                    this.weight > 100
+                      ? "cost_transport_heavy"
+                      : "cost_transport_light"
+                  ].replace("R$ ", "")
+                );
+                const custoAtual = parseFloat(
+                  atual[
+                    this.weight > 100
+                      ? "cost_transport_heavy"
+                      : "cost_transport_light"
+                  ].replace("R$ ", "")
+                );
+                return custoAtual < custoAnterior ? atual : anterior;
+              }
             );
-          });
 
-          this.bestFreightEconomic = cotacoesFiltradas.reduce(
-            (anterior, atual) => {
-              const custoAnterior = parseFloat(
-                anterior[
-                  this.weight > 100
-                    ? "cost_transport_heavy"
-                    : "cost_transport_light"
-                ].replace("R$ ", "")
-              );
-              const custoAtual = parseFloat(
-                atual[
-                  this.weight > 100
-                    ? "cost_transport_heavy"
-                    : "cost_transport_light"
-                ].replace("R$ ", "")
-              );
-              return custoAtual < custoAnterior ? atual : anterior;
-            }
-          );
-
-          this.bestFreightFast = cotacoesFiltradas.reduce((anterior, atual) => {
-            const tempoAnterior = parseInt(anterior.lead_time.replace("h", ""));
-            const tempoAtual = parseInt(atual.lead_time.replace("h", ""));
-            return tempoAtual < tempoAnterior ? atual : anterior;
-          });
+            this.bestFreightFast = cotacoesFiltradas.reduce(
+              (anterior, atual) => {
+                const tempoAnterior = parseInt(
+                  anterior.lead_time.replace("h", "")
+                );
+                const tempoAtual = parseInt(atual.lead_time.replace("h", ""));
+                return tempoAtual < tempoAnterior ? atual : anterior;
+              }
+            );
+          } else {
+            console.error(
+              "A resposta da API não contém um array válido de transportadoras"
+            );
+          }
         })
         .catch((error) => {
           console.error(
@@ -121,6 +137,7 @@ export default {
           );
         });
     },
+
     calculateTotalCost(freight) {
       if (!freight) return 0;
 
